@@ -1,0 +1,27 @@
+{% extends "Shopplist/layout.html" %}
+{% load static %}
+
+{% block script %}
+    <script src="{% static 'Shopplist/main.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+<div id="site-body">
+    <div id="active-view">
+        <h3>Active Items</h3>
+    </div>
+
+    <div id="all-items-view">
+        <h3>All Items</h3>
+
+        <form>
+            <h5>Add New Item</h5>
+            {% csrf_token %}
+            {{ item_form }}
+            <input class="btn btn-primary" type="submit" value="Add"
+        </form>
+
+
+    </div>
+</div>
+{% endblock %}

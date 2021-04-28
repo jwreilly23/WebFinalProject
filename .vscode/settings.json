@@ -1,0 +1,7 @@
+{
+    "python.pythonPath": "C:\\Users\\Jack\\Anaconda3\\python.exe",
+    "python.linting.pylintArgs": [
+        "--disable=django-not-configured",
+        "--django-settings-module=/.vscode/settings.settings",
+    ]
+}
