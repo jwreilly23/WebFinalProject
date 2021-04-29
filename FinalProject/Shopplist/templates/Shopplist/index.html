@@ -12,14 +12,19 @@
     </div>
 
     <div id="all-items-view">
-        <h3>All Items</h3>
+
+        <div id="alert-holder">
+            <div id="alert" class="alert alert-success" role="alert">dsfsdf</div>
+        </div>
 
         <form>
             <h5>Add New Item</h5>
             {% csrf_token %}
             {{ item_form }}
-            <input class="btn btn-primary" type="submit" value="Add"
+            <input class="btn btn-primary" type="submit" value="Add">
         </form>
+
+        <h3 style="margin-top:30px;">All Items</h3>
 
 
     </div>

@@ -4,6 +4,8 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django import forms
+
+import json
 # from django.contrib.auth.decorators import login_required
 
 from .models import User, Category, Item, Shoplist
@@ -101,12 +103,13 @@ def item(request):
     if request.method == "POST":
         # load body request
         item = json.loads(request.body)
-        new_item = Item(name=item.name, creator=request.user)
-        if item.category:
-            new_item.category = item.category
-        if item.aisle:
-            new_item.aisle = item.aisle
-        new_item.save()
+        print(item)
+        # new_item = Item(name=item.name, creator=request.user)
+        # if item.category:
+        #     new_item.category = item.category
+        # if item.aisle:
+        #     new_item.aisle = item.aisle
+        # new_item.save()
 
         return "Success"
 
