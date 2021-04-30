@@ -30,6 +30,9 @@ function allItemsView(alerter) {
         alertHolder.style.display = 'block';
     }
 
+    // alert info
+    alertMessage = document.querySelector('#item-alert');
+
     // form logic
     document.querySelector('form').onsubmit = function() {
         event.preventDefault();
@@ -57,9 +60,20 @@ function allItemsView(alerter) {
             // if item already matching name, alert replace/edit/cancel
 
             // if success
-            if (reply === 'Success') {
-                // alert item added successfully
-                allItemsView(reply)
+            if (reply.status === 'Success') {
+                // update alert
+                alertMessage.setAttribute('class', 'alert alert-success');
+                alertMessage.innerHTML = `New item '${itemName}' added succcessfully`;
+
+                // reload view with alert
+                allItemsView(reply);
+            } else {
+                alertMessage.setAttribute('class', 'alert alert-danger');
+                alertMessage.innerHTML = reply.status;
+
+                // reload view with alert
+                allItemsView(reply);
+
             }
         })
         .catch(error => {

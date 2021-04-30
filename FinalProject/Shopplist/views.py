@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django import forms
@@ -16,7 +16,7 @@ class ItemForm(forms.ModelForm):
         model = Item
         fields = ("name", "category", "aisle")
         # widgets = {
-        #     'category': forms.ModelChoiceField(Category.objects.filter(name="Milk"))
+            # 'category': forms.TypedChoiceField(coerce=str, empty_value="Category")
         # }
 
 def index(request):
@@ -27,7 +27,7 @@ def index(request):
 
     # item form for user categories only
     item_form = ItemForm()
-    item_form.fields["category"] = forms.ModelChoiceField(Category.objects.filter(creator=request.user))
+    item_form.fields["category"] = forms.ModelChoiceField(Category.objects.filter(creator=request.user), empty_label="None", required=False)
 
     return render(request, "Shopplist/index.html", {
         "item_form": item_form
@@ -103,15 +103,35 @@ def item(request):
     if request.method == "POST":
         # load body request
         item = json.loads(request.body)
-        print(item)
-        # new_item = Item(name=item.name, creator=request.user)
-        # if item.category:
-        #     new_item.category = item.category
-        # if item.aisle:
-        #     new_item.aisle = item.aisle
-        # new_item.save()
 
-        return "Success"
+        # check if name already exits
+        try:
+            test = Item.objects.get(name=item["name"])
+            return JsonResponse({"status": "Item already exists"}, status=400)
+            # add link to edit ----------------------------------------------------------------------------------------
+        except Item.DoesNotExist:
+            pass
+
+
+        new_item = Item(name=item["name"], creator=request.user)
+        
+        if item["category"]:       
+            try: 
+                # if inputted category already exists ---------------------------------------- for now, has to exist.
+                category = Category.objects.get(id = int(item["category"]))
+                new_item.category = category
+            except Category.DoesNotExist:
+                # new category
+                # new_category = Category(name=item["category"])
+                # new_category.save()
+                return JsonResponse({"status": "Invalid category"}, status=400)
+
+        if item["aisle"]:
+            new_item.aisle = item["aisle"]
+
+        new_item.save()
+
+        return JsonResponse({"status": "Success"}, status=200)
 
     # if put, update item
     if request.method == "PUT":
@@ -120,3 +140,14 @@ def item(request):
         
     else:
         return HttpResponseRedirect(reverse("index"))
+
+
+def get_items(request, filter):
+
+    if filter == "all":
+        pass
+
+    if filter == "active":
+        pass
+
+    pass

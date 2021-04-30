@@ -9,5 +9,6 @@ urlpatterns = [
     path("register", views.register, name="register"),
 
     # API Routes
-    path("item", views.item, name="item")
+    path("item", views.item, name="item"),
+    path("get_items/<str:filter>", views.get_items, name="get_items")
 ]
