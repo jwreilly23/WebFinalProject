@@ -17,6 +17,9 @@ function activeView() {
     document.querySelector('#active-view').style.display = 'block';
     document.querySelector('#all-items-view').style.display = 'none';
 
+    // flush items list
+    document.querySelector('#items-list').innerHTML = '';
+
 
 }
 
@@ -30,8 +33,23 @@ function allItemsView(alerter) {
         alertHolder.style.display = 'block';
     }
 
+    // flush items list
+    document.querySelector('#items-list').innerHTML = '';
+
     // alert info
     alertMessage = document.querySelector('#item-alert');
+
+    // get all items
+    fetch('get_items/all')
+    .then(response => response.json())
+    .then(data => {
+        // add each to view
+        console.log(data);
+
+        data.forEach(addItemToView);
+
+        // error case
+    })
 
     // form logic
     document.querySelector('form').onsubmit = function() {
@@ -81,4 +99,53 @@ function allItemsView(alerter) {
         });
     }
     
+}
+
+function addItemToView(item) {
+    // create divs
+    addedItem = document.createElement('tr');
+    itemName = document.createElement('td');
+    itemCategory = document.createElement('td');
+    itemAisle = document.createElement('td');
+    itemListStatus = document.createElement('td');
+    itemActive = document.createElement('input');
+
+    // purchases at some point ----------------------------------------------
+
+
+    // set classes
+    // addedItem.setAttribute('class', 'row item-holder')
+    // itemName.setAttribute('class', 'col-4 item-name');
+    // itemCategory.setAttribute('class', 'col-4 item-category');
+    // itemAisle.setAttribute('class', 'col-4 item-aisle');
+
+    // fill in content
+    itemName.innerHTML = item.name;
+    if (item.category === "None") {
+        itemCategory.innerHTML = `<i>${item.category}</i>`;
+    } else {
+        itemCategory.innerHTML = item.category;
+    }
+    itemAisle.innerHTML = item.aisle;
+    itemActive.setAttribute('type', 'checkbox');
+    if (item.active === true) {
+        itemActive.checked = true;
+    }
+
+    // set click for checkbox
+    itemActive.addEventListener('click', () => {
+        fetch(`list_status/${item.pk}`)
+        .then(response => response.json())
+        .then(result => {
+            allItemsView(result.action);
+        })
+    });
+
+
+    // add to all-items-view
+    itemListStatus.append(itemActive);
+    addedItem.append(itemName, itemCategory, itemAisle, itemListStatus)
+    itemsDisplay = document.querySelector('#items-list');
+    itemsDisplay.append(addedItem);
+
 }

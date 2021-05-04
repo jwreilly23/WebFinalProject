@@ -4,7 +4,7 @@ from .models import User, Category, Item, Shoplist
 
 # Register your models here.
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ("creator", "name", "category", "aisle", "purchases")
+    list_display = ("creator", "name", "category", "aisle", "active", "purchases")
 
 
 class CategoryAdmin(admin.ModelAdmin):

@@ -145,9 +145,25 @@ def item(request):
 def get_items(request, filter):
 
     if filter == "all":
-        pass
+        items = Item.objects.filter(creator=request.user)
+        return JsonResponse([item.serialize() for item in items], safe=False)
 
     if filter == "active":
         pass
 
     pass
+
+def list_status(request, pk):
+    # get item by pk
+    item = Item.objects.get(pk=pk)
+
+    # reverse active status
+    if item.active:
+        item.active = False
+        action = "Removed from shopping list"
+    else:
+        item.active = True
+        action = "Added to shopping list"
+    item.save()
+
+    return JsonResponse({"action": action})

@@ -10,5 +10,6 @@ urlpatterns = [
 
     # API Routes
     path("item", views.item, name="item"),
-    path("get_items/<str:filter>", views.get_items, name="get_items")
+    path("get_items/<str:filter>", views.get_items, name="get_items"),
+    path("list_status/<int:pk>", views.list_status, name="list_status")
 ]
