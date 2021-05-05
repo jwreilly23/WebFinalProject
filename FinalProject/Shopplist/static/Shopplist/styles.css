@@ -12,3 +12,11 @@
     padding: 10px 10px;
     border: 1px solid red;
 }
+
+#alert-message {
+    margin: 10px 10px;
+}
+
+textarea {
+    height: 40px;
+}

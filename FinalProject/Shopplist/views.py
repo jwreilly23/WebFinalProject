@@ -135,7 +135,39 @@ def item(request):
 
     # if put, update item
     if request.method == "PUT":
-        pass
+        # get request info
+        updates = json.loads(request.body)
+
+        # get item, update vals, save
+        item_to_update = Item.objects.get(pk=updates["pk"], creator=request.user)
+
+        # check if category exists
+        try:
+            category = Category.objects.get(name=updates["category"], creator=request.user)
+        except Category.DoesNotExist:
+            # new category
+            if updates["category"] == '':
+                category = None
+            else:
+                category = Category(name=updates["category"], creator=request.user)
+                category.save()
+
+
+
+        # probs delete ----------------------------------------------------------------------------------
+        # for field in ["name", "category", "aisle"]:
+        #     setattr(item_to_update, field, updates[field])
+
+        item_to_update.name = updates["name"]
+        item_to_update.category = category
+        item_to_update.aisle = updates["aisle"]
+        item_to_update.save()
+
+        # if new category, send indicator
+
+        # return updated values
+        return JsonResponse(item_to_update.serialize(), safe=False)
+
 
         
     else:

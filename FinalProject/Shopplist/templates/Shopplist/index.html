@@ -6,16 +6,21 @@
 {% endblock %}
 
 {% block body %}
+
+<div id="alert-holder">
+    <div id="alert-message" role="alert"></div>
+</div>
+
 <div id="site-body">
     <div id="active-view">
         <h3>Active Items</h3>
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th scope="col">Checked</th>
                     <th scope="col">Item Name</th>
                     <th scope="col">Category</th>
                     <th scope="col">Aisle</th>
+                    <th scope="col">Checked</th>
                 </tr>
             </thead>
             <tbody id="active-items-list">
@@ -24,11 +29,6 @@
     </div>
 
     <div id="all-items-view">
-
-        <div id="alert-holder">
-            <div id="item-alert" role="alert">dsfsdf</div>
-        </div>
-
         <form>
             <h5>Add New Item</h5>
             {% csrf_token %}

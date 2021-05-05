@@ -20,22 +20,26 @@ class Category(models.Model):
 
 
 # default category for items should be "None"
-default_category = Category.objects.get(name="None").pk
+# default_category = Category.objects.get(pk=1)
 
 class Item(models.Model):
     name = models.CharField(max_length=30)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="items")
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="items", default=default_category)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, related_name="items", blank=True, null=True)
     aisle = models.CharField(max_length=30, blank=True, null=True)
     active = models.BooleanField(default=False)
     purchases =  models.IntegerField(default=0)
 
     def serialize(self):
         '''Returns item info as JSON'''
+        if self.category is None:
+            serial_category = None
+        else:
+            serial_category = self.category.name 
         return {
             "name": self.name,
             "pk": self.pk,
-            "category": self.category.name,
+            "category": serial_category,
             "aisle": self.aisle,
             "active": self.active,
             "purchases": self.purchases
