@@ -6,7 +6,6 @@
     margin: 10px;
 }
 
-
 .item-holder {
     margin: 10px 10px;
     padding: 10px 10px;
@@ -19,4 +18,50 @@
 
 textarea {
     height: 40px;
+}
+
+.dropdown-toggle::after {
+    /* make button centered */
+    margin-left: 0px;
+    color: blue;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+th {
+    width: 20%;
+}
+
+
+.item-quantity {
+    width: 40px;
+}
+
+.item-price {
+    width: 80px;
+}
+
+.col-3 {
+    margin: auto;
+    padding: auto;
+}
+
+.delete-options {
+    margin: 10px 10px;
+}
+
+.row-manage {
+    width: 90%;
+    margin: 50px auto;
+}
+
+.col-manage {
+    width: 10%;
+    min-width: 225px;
+}
+
+h3 {
+    margin-left: 20px;
 }

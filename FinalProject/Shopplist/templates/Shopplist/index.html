@@ -12,20 +12,22 @@
 </div>
 
 <div id="site-body">
+
     <div id="active-view">
-        <h3>Active Items</h3>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th scope="col">Item Name</th>
-                    <th scope="col">Category</th>
-                    <th scope="col">Aisle</th>
-                    <th scope="col">Checked</th>
-                </tr>
-            </thead>
-            <tbody id="active-items-list">
-            </tbody>
-        </table>
+        <div class="row">
+            <div class="col">
+                <h3>Active Items</h3>
+            </div>
+            <div class="col" style="text-align:right; padding-right:50px;">
+                <button class="btn btn-success" name="finish-shopping">Finish Shopping</button>
+            </div>            
+        </div>
+        <div class="row">
+            <h6 style="margin-left: 20px;">
+                Estimated total:
+                <span id="estimate-total"></span>
+            </h6>
+        </div>
     </div>
 
     <div id="all-items-view">
@@ -35,18 +37,53 @@
             {{ item_form }}
             <input class="btn btn-primary" type="submit" value="Add">
         </form>
-
         <h3 style="margin-top:30px;">All Items</h3>
+
+    </div>
+
+    <div id="settings-view">
+        <h3>Manage Categories / Aisles</h3>
+        <form>
+            <div class="row row-manage">
+                <div class="col-2 col-manage delete-categories">
+                    <h6>Remove Category</h6>
+                    <div id="cat-delete-options"></div>
+                </div>
+                <div class="col-2 col-manage delete-aisles">
+                    <h6>Remove Aisle</h6>
+                    <div id="aisle-delete-options"></div>
+                </div>
+                <div class="col" style="margin-top:auto; margin-bottom:10px;">
+                    <input type="submit" class="btn btn-danger" name="delete" value="Remove"></button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div id="list-table">
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th scope="col">Item Name</th>
-                    <th scope="col">Category</th>
-                    <th scope="col">Aisle</th>
-                    <th scope="col">On List</th>
+                    <th scope="col">
+                        <span>Item Name</span>
+                        <button class="btn btn-link btn-sm dropdown-toggle" type="button" name="sort" data-sort="name">
+                    </th>
+                    <th scope="col">
+                        <span>Category</span>
+                        <button class="btn btn-link btn-sm dropdown-toggle" type="button" name="sort" data-sort="category">
+                    </th>
+                    <th scope="col">
+                        <span>Aisle</span>
+                        <button class="btn btn-link btn-sm dropdown-toggle" type="button" name="sort" data-sort="aisle">
+                    </th>
+                    <th scope="col" name="quantity-col">
+                        <span></span>
+                        <button class="btn btn-link btn-sm dropdown-toggle" type="button" name="sort" data-sort="quantity"></button>
+                    </th>
+                    <th scope="col" name="check-col"></th>
                 </tr>
             </thead>
-            <tbody id="all-items-list">
+            <tbody id="items-list">
             </tbody>
         </table>
     </div>

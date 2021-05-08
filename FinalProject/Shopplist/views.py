@@ -4,20 +4,36 @@ from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django import forms
+from django.db.models.functions import Lower
+from django.utils.translation import gettext_lazy as _
 
 import json
 # from django.contrib.auth.decorators import login_required
 
-from .models import User, Category, Item, Shoplist
+from .models import User, Category, Item, Shoplist, Unit
 
 class ItemForm(forms.ModelForm):
     '''New item form generated from Item model'''
     class Meta:
         model = Item
         fields = ("name", "category", "aisle")
+        labels = {
+            "name": _("")
+        }
+
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder":"Enter item name"}),
+            "aisle": forms.TextInput(attrs={"placeholder":"(Optional)"})
+            
+        }
         # widgets = {
             # 'category': forms.TypedChoiceField(coerce=str, empty_value="Category")
         # }
+
+# --------------------------------------------------------------------------- DELETE
+def test_route(request):
+    return render(request, "Shopplist/test.html")
+
 
 def index(request):
     # redirect to login if not logged in
@@ -27,11 +43,27 @@ def index(request):
 
     # item form for user categories only
     item_form = ItemForm()
-    item_form.fields["category"] = forms.ModelChoiceField(Category.objects.filter(creator=request.user), empty_label="None", required=False)
+    item_form.fields["category"] = forms.ModelChoiceField(Category.objects.filter(creator=request.user).order_by("name"), empty_label="None", required=False)
 
     return render(request, "Shopplist/index.html", {
         "item_form": item_form
     })
+
+
+def manage_filters(request):
+    '''Render a page where categories/aisles can be added or deleted'''
+    # get all categories and aisles
+    categories = list(Category.objects.filter(creator=request.user).values_list("name", flat=True))
+    aisles = list(Item.objects.filter(creator=request.user).order_by("aisle").values_list("aisle", flat=True).distinct())
+    # aisles = Item.objects.filter(creator=request.user).order_by("aisle") --------------------------------------------------------------------
+    # aisles = aisles.values_list("aisle", flat=True)
+    aisles = list(filter(None, aisles))
+    # print(list(aisles))
+
+    return JsonResponse({
+        "categories": categories,
+        "aisles": aisles
+    }, safe=True)
 
 
 def login_view(request):
@@ -106,7 +138,7 @@ def item(request):
 
         # check if name already exits
         try:
-            test = Item.objects.get(name=item["name"])
+            test = Item.objects.get(name=item["name"], creator=request.user)
             return JsonResponse({"status": "Item already exists"}, status=400)
             # add link to edit ----------------------------------------------------------------------------------------
         except Item.DoesNotExist:
@@ -118,7 +150,7 @@ def item(request):
         if item["category"]:       
             try: 
                 # if inputted category already exists ---------------------------------------- for now, has to exist.
-                category = Category.objects.get(id = int(item["category"]))
+                category = Category.objects.get(id = int(item["category"], creator=request.user))
                 new_item.category = category
             except Category.DoesNotExist:
                 # new category
@@ -139,7 +171,10 @@ def item(request):
         updates = json.loads(request.body)
 
         # get item, update vals, save
-        item_to_update = Item.objects.get(pk=updates["pk"], creator=request.user)
+        try:
+            item_to_update = Item.objects.get(pk=updates["pk"], creator=request.user)
+        except Item.DoesNotExist:
+            return JsonResponse({"status": "Invalid item"}, status=400)
 
         # check if category exists
         try:
@@ -166,7 +201,7 @@ def item(request):
         # if new category, send indicator
 
         # return updated values
-        return JsonResponse(item_to_update.serialize(), safe=False)
+        return JsonResponse(item_to_update.serialize(), safe=False, status=200)
 
 
         
@@ -174,21 +209,78 @@ def item(request):
         return HttpResponseRedirect(reverse("index"))
 
 
-def get_items(request, filter):
+def get_items(request, filter, order, direction):
+    '''Returns all or active items in json. Orders by name , category or aisle;
+    ascending or descending
+    '''
+
+    # order by category, need to specify by name as opposed to default primary key
+    if order == "category":
+        order = "category__name"
+
+    # quantity col sorting
+    if order == "quantity":
+        if filter == "all":
+            order = "purchases"
+        if filter == "active":
+            pass
+
+    # make ordering case insensitive
+    order = Lower(order)
+
+    # set order to descending if specified
+    if direction == "desc":
+        order = order.desc()
+
+    # choose secondary order
+    if order == "name":
+        secondary_order = Lower("category__name")
+    else:
+        secondary_order = Lower("name")
 
     if filter == "all":
-        items = Item.objects.filter(creator=request.user)
-        return JsonResponse([item.serialize() for item in items], safe=False)
+        items = Item.objects.filter(creator=request.user).order_by(order, secondary_order)
 
     if filter == "active":
-        items = Item.objects.filter(creator=request.user, active=True)
-        return JsonResponse([item.serialize() for item in items], safe=False)
+        items = Item.objects.filter(creator=request.user, active=True).order_by(order, secondary_order)
+        
+    return JsonResponse([item.serialize() for item in items], safe=False, status=200)
 
-    pass
 
-def list_status(request, pk):
+def list_status(request, pk=None):
+    '''If pk included, revert item active status
+    If put request, take list and remove items from list/increment purchases
+    '''
+    if request.method == "PUT":
+        # get items
+        items_list = json.loads(request.body)["items"]
+        # items = Item.objects.filter(pk__in=item_pks)
+
+        # change items to inactive and increment purchases
+        for item in items_list:
+            # first value is item pk
+            try:
+                item_object = Item.objects.get(pk=item["pk"], creator=request.user)
+            except Item.DoesNotExist:
+                return JsonResponse({"status": "Invalid item"}, status=400)
+            item_object.active = False
+            item_object.purchases += 1
+            item_object.price = item["price"]
+            # get unit object
+            unit = Unit.objects.get(unit_abrev=item["units"])
+            item_object.unit = unit
+            # save item
+            item_object.save()
+
+        # no actual json response needed ------------------------------------------------------------------
+        return JsonResponse({"action": "updated"}, status=200)
+
+
     # get item by pk
-    item = Item.objects.get(pk=pk)
+    try:
+        item = Item.objects.get(pk=pk, creator=request.user)
+    except Item.DoesNotExist:
+        return JsonResponse({"status": "Invalid item"}, status=400)
 
     # reverse active status
     if item.active:
@@ -199,4 +291,10 @@ def list_status(request, pk):
         action = f"'{item.name}' added to shopping list"
     item.save()
 
-    return JsonResponse({"action": action})
+    return JsonResponse({"action": action}, status=200)
+
+def get_units(request):
+
+    units = list(Unit.objects.all().values_list("unit_abrev", flat=True))
+    
+    return JsonResponse({"list": units}, status=200)

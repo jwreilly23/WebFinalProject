@@ -19,6 +19,26 @@ class Category(models.Model):
         verbose_name_plural = "categories"
 
 
+class Unit(models.Model):
+    unit_type = models.CharField(max_length=15)
+    unit_abrev = models.CharField(max_length=15)
+
+# https://docs.djangoproject.com/en/3.2/ref/models/fields/#django.db.models.Field.choices
+#     package = "packageee"
+#     pounds = "lbs"
+#     ounces = "oz"
+
+#     unit_choices = [
+#         (package, "Package"),
+#         (pounds, "lbs"),
+#         (ounces, "oz")
+#     ]
+#     unit_type = models.CharField(choices=unit_choices, max_length=15, default=package)
+
+    def __str__(self):
+        return self.unit_type
+
+
 # default category for items should be "None"
 # default_category = Category.objects.get(pk=1)
 
@@ -29,6 +49,10 @@ class Item(models.Model):
     aisle = models.CharField(max_length=30, blank=True, null=True)
     active = models.BooleanField(default=False)
     purchases =  models.IntegerField(default=0)
+    # change unit default?
+    # default unit to be that of pk = 1
+    unit = models.ForeignKey(Unit, on_delete=models.SET_DEFAULT, related_name="units", default=1)
+    price = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
 
     def serialize(self):
         '''Returns item info as JSON'''
@@ -42,7 +66,9 @@ class Item(models.Model):
             "category": serial_category,
             "aisle": self.aisle,
             "active": self.active,
-            "purchases": self.purchases
+            "purchases": self.purchases,
+            "unit": self.unit.unit_abrev,
+            "price": self.price
         }
 
 

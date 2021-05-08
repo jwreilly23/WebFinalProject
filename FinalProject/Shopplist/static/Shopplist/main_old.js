@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // navlinks
     document.querySelector('a[name="active-list"]').addEventListener('click', () => activeView());
     document.querySelector('a[name="all-items"]').addEventListener('click', () => allItemsView());
-    document.querySelector('a[name="settings"]').addEventListener('click', () => settingsView());
 
     // item sorting buttons
     document.querySelectorAll('button[name="sort"]').forEach(function(button) {
@@ -58,9 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function activeView(order='name') {
     // show active view only
     document.querySelector('#active-view').style.display = 'block';
-    document.querySelector('#list-table').style.display = 'block';
     document.querySelector('#all-items-view').style.display = 'none';
-    document.querySelector('#settings-view').style.display = 'none';
     alertHolder.style.display = 'none';
 
     // set current view, clear purchased items list
@@ -112,8 +109,6 @@ function allItemsView(alerter, order='name') {
     // show active view only
     document.querySelector('#active-view').style.display = 'none';
     document.querySelector('#all-items-view').style.display = 'block';
-    document.querySelector('#list-table').style.display = 'block';
-    document.querySelector('#settings-view').style.display = 'none';
     alertHolder.style.display = 'none';
 
     // set current view
@@ -176,45 +171,6 @@ function allItemsView(alerter, order='name') {
     
 }
 
-function settingsView() {
-    // show active view only
-    document.querySelector('#active-view').style.display = 'none';
-    document.querySelector('#all-items-view').style.display = 'none';
-    document.querySelector('#list-table').style.display = 'none';
-    document.querySelector('#settings-view').style.display = 'block';
-    alertHolder.style.display = 'none';
-
-    // get all categories
-    fetch('manage')
-    .then(response => response.json())
-    .then(result => {
-        // get category and aisle delete columns and clear
-        let catDeleteOptions = document.querySelector('#cat-delete-options');
-        catDeleteOptions.innerHTML = '';
-        let aisleDeleteOptions = document.querySelector('#aisle-delete-options');
-        aisleDeleteOptions.innerHTML = '';
-
-        // for all returned categories and aisles, add a checkbox to respecitve column
-        result.categories.forEach(element => addCheckboxRow(element, catDeleteOptions));
-        result.aisles.forEach(element => addCheckboxRow(element, aisleDeleteOptions));
-
-            // console.log(element);
-            // let newRow = document.createElement('div');
-            // let newOption = document.createElement('input');
-            // setMultAttributes(newOption, [["type", "checkbox"], ["class", "delete-options"], ['id', element]]);
-            // let newLabel = document.createElement('label');
-            // newLabel.setAttribute('for', element); 
-            // newLabel.innerHTML = element;
-            // newRow.append(newOption, newLabel);
-            // deleteCategories.append(newRow);
-
-        
-
-        // fill in aisle options
-    })
-
-}
-
 function addItemToView(item) {
     // create divs
     let addedItem = document.createElement('tr');
@@ -225,6 +181,15 @@ function addItemToView(item) {
     let itemActive = document.createElement('input');
     let itemEdit = document.createElement('button');
     let quantCol =  document.createElement('td');
+
+    // purchases at some point ----------------------------------------------
+
+
+    // set classes
+    // addedItem.setAttribute('class', 'row item-holder')
+    // itemName.setAttribute('class', 'col-4 item-name');
+    // itemCategory.setAttribute('class', 'col-4 item-category');
+    // itemAisle.setAttribute('class', 'col-4 item-aisle');
 
     // fill in content
     itemName.innerHTML = item.name;
@@ -292,34 +257,9 @@ function addItemToView(item) {
         }
     });
 
-    // create checkbox
-    itemActive.setAttribute('type', 'checkbox');
-    
-    // if on all items
+    // quantity columns
     if (currentView === 'all') {
-        // quantity col
         quantCol.innerHTML = item.purchases;
-
-        // amount col
-        if (item.active === true) {
-            itemActive.checked = true;
-        }
-
-        // set click functionality for checkbox
-        itemActive.addEventListener('click', function() {
-            fetch(`list_status/${item.pk}`)
-            .then(response => response.json())
-            .then(result => {
-                // show alert notifying change
-                alertMessage.innerHTML = result.action;
-                alertMessage.setAttribute('class', 'alert alert-info');
-                document.querySelector('#alert-holder').style.display = 'block';
-            })
-            .catch(error => {
-                console.log('Error', error);
-            })
-        });
-
     } else if (currentView === 'active') {
         // create cols for quantity, unit, price
         let amountRow = document.createElement('div');
@@ -336,7 +276,6 @@ function addItemToView(item) {
         let itemQuantity = document.createElement('input');
         setMultAttributes(itemQuantity, [['type', 'number'], ['max', '99'], ['min', '0'], ['class', 'item-quantity']]);
         itemQuantity.value = 1;
-
         // update cart total as quantity changes
         itemQuantity.setAttribute('onchange', 'cartTotaller()')
 
@@ -352,8 +291,7 @@ function addItemToView(item) {
         let itemPrice = document.createElement('input');
         setMultAttributes(itemPrice, [['type', 'number'], ['max', '99'], ['min', '0.25'], ['value', item.price], ['step', '0.25'], ['class', 'form-control']]);
         // update cart total as quantity changes
-        itemPrice.setAttribute('onchange', 'cartTotaller(); this.value=Number(this.value).toFixed(2);')
-        itemPrice.value = Number(itemPrice.value).toFixed(2);
+        itemPrice.setAttribute('onchange', 'cartTotaller()')
 
         //price append
         let priceAppend = document.createElement('div');
@@ -373,26 +311,33 @@ function addItemToView(item) {
         // set value to item unit as saved
         itemUnit.value = item.unit;
 
-        // nest elements 
         amountCol1.append(itemQuantity);
         amountCol2.append(pricePrepend, itemPrice, priceAppend);
         amountCol3.append(itemUnit);
         amountRow.append(amountCol1, amountCol2, amountCol3);
         quantCol.append(amountRow);
+    }
 
-        // checkbox
-        if (purchasedItems.includes(item.pk)) {
-            // item is on purchased list, check box
-            itemActive.checked = true;
-            itemName.style.textDecoration = itemCategory.style.textDecoration = itemAisle.style.textDecoration = 'line-through';
-        }
 
-        // set click functionality for checkbox
-        itemActive.addEventListener('click', function() {
+    // checkbox
+    itemActive.setAttribute('type', 'checkbox');
+    if (currentView === 'all' && item.active === true) {
+        itemActive.checked = true;
+    }
+    if (currentView === 'active' && purchasedItems.includes(item.pk)) {
+        // item is on purchased list, check box
+        itemActive.checked = true;
+        itemName.style.textDecoration = itemCategory.style.textDecoration = itemAisle.style.textDecoration = 'line-through';
+    }
+
+    // set click for checkbox
+    itemActive.addEventListener('click', function() {
+        // if active (shopping) view
+        if (currentView === 'active') {
             // toggle row line-through on click, and add/removed to purchasedItems array
             if (itemName.style.textDecoration === '') {
                 itemName.style.textDecoration = itemCategory.style.textDecoration = itemAisle.style.textDecoration = 'line-through';
-                purchasedItems.push({"pk": item.pk, "price": itemPrice.value, "units": itemUnit.value});
+                purchasedItems.push([item.pk, amountCol1]);
             } else {
                 itemName.style.textDecoration = itemCategory.style.textDecoration = itemAisle.style.textDecoration = '';
                 // remove item from purchasedItems
@@ -401,14 +346,30 @@ function addItemToView(item) {
                     purchasedItems.splice(itemIndex, 1);
                 }
             }
-        });
-    }
+        }
+
+        // if all items view
+        if (currentView === 'all') {
+            fetch(`list_status/${item.pk}`)
+            .then(response => response.json())
+            .then(result => {
+                // show alert notifying change
+                alertMessage.innerHTML = result.action;
+                alertMessage.setAttribute('class', 'alert alert-info');
+                document.querySelector('#alert-holder').style.display = 'block';
+            })
+            .catch(error => {
+                console.log('Error', error);
+            })
+        }
+    });
 
     // add to items to view
     itemListStatus.append(itemActive, itemEdit);
     addedItem.append(itemName, itemCategory, itemAisle, quantCol, itemListStatus)
     itemsDisplay = document.querySelector(`#items-list`);
     itemsDisplay.append(addedItem);
+
 }
 
 function getItems(filter, order) {
@@ -496,15 +457,4 @@ function cartTotaller() {
 
     // update cart total
     cartTotal.innerHTML = totalFormatter.format(totalAmount);
-}
-
-function addCheckboxRow(element, column) {
-    let newRow = document.createElement('div');
-    let newOption = document.createElement('input');
-    setMultAttributes(newOption, [["type", "checkbox"], ["class", "delete-options"], ['id', element]]);
-    let newLabel = document.createElement('label');
-    newLabel.setAttribute('for', element); 
-    newLabel.innerHTML = element;
-    newRow.append(newOption, newLabel);
-    column.append(newRow);
 }
