@@ -23,41 +23,56 @@
             </div>            
         </div>
         <div class="row">
-            <h6 style="margin-left: 20px;">
+            <h5 style="margin-left: 25px;">
                 Estimated total:
-                <span id="estimate-total"></span>
-            </h6>
+                <span class="estimate-total total-increase"></span>
+            </h5>
         </div>
     </div>
 
     <div id="all-items-view">
-        <form>
+        <form style="margin-left:10px;">
             <h5>Add New Item</h5>
             {% csrf_token %}
             {{ item_form }}
-            <input class="btn btn-primary" type="submit" value="Add">
+            <input class="btn btn-primary btn-sm" type="submit" value="Add">
         </form>
-        <h3 style="margin-top:30px;">All Items</h3>
+        <h3 style="margin-top:20px;">All Items</h3>
 
     </div>
 
     <div id="settings-view">
-        <h3>Manage Categories / Aisles</h3>
+        <div class="row" style="width:600px">
+            <div class="col">
+                <h3>Remove Categories</h3>
+            </div>
+            <div class="col" style="margin:auto auto;">
+                <input type="submit" class="btn btn-danger btn-sm" name="delete" value="Remove"></button>
+            </div>
+        </div>
+
         <form>
             <div class="row row-manage">
                 <div class="col-2 col-manage delete-categories">
-                    <h6>Remove Category</h6>
                     <div id="cat-delete-options"></div>
-                </div>
-                <div class="col-2 col-manage delete-aisles">
-                    <h6>Remove Aisle</h6>
-                    <div id="aisle-delete-options"></div>
-                </div>
-                <div class="col" style="margin-top:auto; margin-bottom:10px;">
-                    <input type="submit" class="btn btn-danger" name="delete" value="Remove"></button>
                 </div>
             </div>
         </form>
+        <h3>Toggle Darkmode</h3>
+        <div id="darkmode-holder">
+            <div class="row" style="width:300px">
+                <div class="col-2" style="text-align:right;">
+                    <span id="darkmode-off"></span>
+                </div>
+                <div class="col-10" style="padding-left:5px;">
+                    <label class="switch">
+                        <input type="checkbox" id="darkmode-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span id="darkmode-on"></span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="list-table">

@@ -30,11 +30,6 @@ class ItemForm(forms.ModelForm):
             # 'category': forms.TypedChoiceField(coerce=str, empty_value="Category")
         # }
 
-# --------------------------------------------------------------------------- DELETE
-def test_route(request):
-    return render(request, "Shopplist/test.html")
-
-
 def index(request):
     # redirect to login if not logged in
     if not request.user.is_authenticated:
@@ -46,24 +41,53 @@ def index(request):
     item_form.fields["category"] = forms.ModelChoiceField(Category.objects.filter(creator=request.user).order_by("name"), empty_label="None", required=False)
 
     return render(request, "Shopplist/index.html", {
-        "item_form": item_form
+        "item_form": item_form,
+        "darkmode": request.user.darkmode
     })
 
 
-def manage_filters(request):
-    '''Render a page where categories/aisles can be added or deleted'''
-    # get all categories and aisles
-    categories = list(Category.objects.filter(creator=request.user).values_list("name", flat=True))
-    aisles = list(Item.objects.filter(creator=request.user).order_by("aisle").values_list("aisle", flat=True).distinct())
-    # aisles = Item.objects.filter(creator=request.user).order_by("aisle") --------------------------------------------------------------------
-    # aisles = aisles.values_list("aisle", flat=True)
-    aisles = list(filter(None, aisles))
-    # print(list(aisles))
+def settings(request, darkmode=None):
+    '''Settings page, for deleting categories and toggling darkmode'''
 
-    return JsonResponse({
-        "categories": categories,
-        "aisles": aisles
-    }, safe=True)
+    if request.method == "PUT":
+        if darkmode == "on":
+            request.user.darkmode = True
+        elif darkmode == "off":
+            request.user.darkmode = False
+        request.user.save()
+        return JsonResponse({"status": "Success"}, status=200)
+
+
+    if request.method == "GET":
+        # get all categories and aisles
+        categories = list(Category.objects.filter(creator=request.user).values_list("name", flat=True))
+        aisles = list(Item.objects.filter(creator=request.user).order_by("aisle").values_list("aisle", flat=True).distinct())
+        # aisles = Item.objects.filter(creator=request.user).order_by("aisle") --------------------------------------------------------------------
+        # aisles = aisles.values_list("aisle", flat=True)
+        aisles = list(filter(None, aisles))
+        # print(list(aisles))
+
+        return JsonResponse({
+            "categories": categories,
+            "aisles": aisles
+        }, safe=True)
+
+    if request.method == "DELETE":
+        to_delete = json.loads(request.body)
+        categories = to_delete["categories"]
+        print(categories)
+        
+        for category in categories:
+            try:
+                Category.objects.get(name=category, creator=request.user).delete()
+            except Category.DoesNotExist:
+                return JsonResponse({"status": "Invalid category"}, status=400)
+        
+        return HttpResponseRedirect(reverse("index"))
+
+    
+        
+
 
 
 def login_view(request):
@@ -254,20 +278,21 @@ def list_status(request, pk=None):
     if request.method == "PUT":
         # get items
         items_list = json.loads(request.body)["items"]
+        # print(items_list)
         # items = Item.objects.filter(pk__in=item_pks)
 
         # change items to inactive and increment purchases
         for item in items_list:
-            # first value is item pk
             try:
-                item_object = Item.objects.get(pk=item["pk"], creator=request.user)
+                item_object = Item.objects.get(pk=item, creator=request.user)
+                print(item_object)
             except Item.DoesNotExist:
                 return JsonResponse({"status": "Invalid item"}, status=400)
             item_object.active = False
             item_object.purchases += 1
-            item_object.price = item["price"]
+            item_object.price = items_list[item]["price"]
             # get unit object
-            unit = Unit.objects.get(unit_abrev=item["units"])
+            unit = Unit.objects.get(unit_abrev=items_list[item]["units"])
             item_object.unit = unit
             # save item
             item_object.save()

@@ -7,9 +7,10 @@ urlpatterns = [
     path("login", views.login_view, name="login"),
     path("logout", views.logout_view, name="logout"),
     path("register", views.register, name="register"),
-    path("manage", views.manage_filters, name="manage"),
+    path("settings", views.settings, name="settings"),
+    path("settings/darkmode=<str:darkmode>", views.settings, name="settings_darkmode"),
     # DELETE ------------------------------------------------
-    path("test", views.test_route, name="test"),
+    # path("test", views.test_route, name="test"),
 
     # API Routes
     path("item", views.item, name="item"),
