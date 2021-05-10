@@ -58,15 +58,3 @@ class Item(models.Model):
     def __str__(self):
         return f"{self.name} (created by {self.creator.username})"
     
-
-class Shoplist(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="shoplist")
-    item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="shoplist")
-    quantity = models.IntegerField(default=1)
-
-    def __str__(self):
-        return f"{self.quantity} {self.item.name} on {self.user.username} shopping list"
-
-    # make plural shopping lists
-    class Meta:
-        verbose_name_plural = "Shopping Lists"

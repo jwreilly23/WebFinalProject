@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 
 import json
 
-from .models import User, Category, Item, Shoplist, Unit
+from .models import User, Category, Item, Unit
 
 class ItemForm(forms.ModelForm):
     '''New item form generated from Item model'''
@@ -55,22 +55,13 @@ def settings(request, darkmode=None):
     if request.method == "GET":
         # get all categories and aisles
         categories = list(Category.objects.filter(creator=request.user).values_list("name", flat=True))
-        aisles = list(Item.objects.filter(creator=request.user).order_by("aisle").values_list("aisle", flat=True).distinct())
-        # aisles = Item.objects.filter(creator=request.user).order_by("aisle") --------------------------------------------------------------------
-        # aisles = aisles.values_list("aisle", flat=True)
-        aisles = list(filter(None, aisles))
-        # print(list(aisles))
 
-        return JsonResponse({
-            "categories": categories,
-            "aisles": aisles
-        }, safe=True)
+        return JsonResponse({"categories": categories}, safe=True)
 
     if request.method == "DELETE":
         # for deleting categories
         to_delete = json.loads(request.body)
         categories = to_delete["categories"]
-        print(categories)
         
         for category in categories:
             try:
