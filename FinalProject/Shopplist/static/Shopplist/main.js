@@ -10,7 +10,6 @@ let cartTotal;
 let deleteList = {};
 
 document.addEventListener('DOMContentLoaded', function() {
-
     // navlinks
     document.querySelector('a[name="active-list"]').addEventListener('click', () => activeView());
     document.querySelector('a[name="all-items"]').addEventListener('click', () => allItemsView());
@@ -24,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (currentView === "all") {
                 allItemsView(undefined, button.dataset.sort);
             }
-        }
+        };
     });
 
     // finish shopping button
@@ -33,9 +32,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (action === true) {
             updateList(purchasedItems);
         } 
-    })
+    });
 
-    // make alert message, token, cart total global
+    // make alert message, token, cart total elements global
     alertHolder = document.querySelector('#alert-holder');
     alertMessage = document.querySelector('#alert-message');
     token = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
@@ -53,7 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // by default load active view
     activeView();    
-
 });
 
 function activeView(order='name') {
@@ -74,7 +72,7 @@ function activeView(order='name') {
     alertMessage.innerHTML = '';    
     
     // get items
-    getItems('active', order)
+    getItems('active', order);
 }
 
 function allItemsView(alerter, order='name') {
@@ -92,7 +90,6 @@ function allItemsView(alerter, order='name') {
     document.querySelector('#items-list').innerHTML = '';
     document.querySelector('th[name="check-col"]').innerHTML = 'On List';
     document.querySelector('th[name="quantity-col"] > span').innerHTML = 'Purchases';
-    // alertMessage.innerHTML = '';
 
     // show alert if view loaded with alert
     if (alerter != undefined) {
@@ -107,9 +104,9 @@ function allItemsView(alerter, order='name') {
         event.preventDefault();
 
         // read in form data
-        let itemName = document.querySelector('input[name="name"]').value
-        let itemCategory = document.querySelector('select[name="category"]').value
-        let itemAisle = document.querySelector('input[name="aisle"]').value
+        let itemName = document.querySelector('input[name="name"]').value;
+        let itemCategory = document.querySelector('select[name="category"]').value;
+        let itemAisle = document.querySelector('input[name="aisle"]').value;
 
         fetch('item', {
             method: 'POST',
@@ -126,7 +123,6 @@ function allItemsView(alerter, order='name') {
         .then(response => response.json())
         .then(reply => {
             // if item already matching name, alert replace/edit/cancel
-
             if (reply.status === 'Success') {
                 alertMessage.innerHTML = `New item \'${itemName}\' added succcessfully`;
                 alertMessage.setAttribute('class', 'alert alert-success');
@@ -141,7 +137,7 @@ function allItemsView(alerter, order='name') {
         .catch(error => {
             console.log('Error', error);
         });
-    }
+    };
     
 }
 
@@ -160,35 +156,75 @@ function settingsView() {
         // get category and aisle delete columns and clear
         let catDeleteOptions = document.querySelector('#cat-delete-options');
         catDeleteOptions.innerHTML = '';
-        // let aisleDeleteOptions = document.querySelector('#aisle-delete-options');
-        // aisleDeleteOptions.innerHTML = '';
 
         // for all returned categories and aisles, add a checkbox to respecitve column. Clear delete list
         deleteList = {};
         result.categories.forEach(element => addCheckboxRow(element, catDeleteOptions, deleteList));
-        // result.aisles.forEach(element => addCheckboxRow(element, aisleDeleteOptions, deleteList));
 
-        // when delete button clicked, remove all categories and aisles on delete list
-        let deleteButton = document.querySelector('input[name="delete"]');
+        // when delete button clicked, remove all categories checked ... clone button to prevent multi triggers
+        let oldDeleteButton = document.querySelector('input[name="delete"]');
+        let deleteButton = oldDeleteButton.cloneNode(true);
+        oldDeleteButton.parentNode.replaceChild(deleteButton, oldDeleteButton);
         deleteButton.addEventListener('click', () => {
-            event.preventDefault;
+            event.preventDefault();
 
-            fetch('settings', {
-                method: "DELETE",
-                body: JSON.stringify({
-                    categories: deleteList.categories,
-                    // aisles: deleteList.aisles
-                }),
-                headers: {
-                    // send csrf token
-                    'X-CSRFToken': token
-                }
-            })
-            .catch(error => {
-                console.log('Error', error);
-            })
-        })
-    })
+            if (deleteList.categories) {
+                // only execute if delete list categories exists
+                fetch('settings', {
+                    method: "DELETE",
+                    body: JSON.stringify({
+                        categories: deleteList.categories,
+                    }),
+                    headers: {
+                        // send csrf token
+                        'X-CSRFToken': token
+                    }
+                })
+                .then(response => response.json())
+                .then(reply => {
+                    console.log(reply);
+                    settingsView();
+                })
+                .catch(error => {
+                    console.log('Error', error);
+                });
+            }
+        });
+
+        // add new category ... clone button to prevent multiple event triggers
+        let oldAddButton = document.querySelector('input[name="add"]');
+        let addButton = oldAddButton.cloneNode(true);
+        oldAddButton.parentNode.replaceChild(addButton, oldAddButton);
+        addButton.addEventListener('click', () => {
+            event.preventDefault();
+
+            let newCategory = document.querySelector('#new-category').value;
+            if (newCategory) {
+                fetch('settings', {
+                    method: "POST",
+                    body: JSON.stringify({
+                        category: newCategory,
+                    }),
+                    headers: {
+                        // send csrf token
+                        'X-CSRFToken': token
+                    }
+                })
+                .then(response => response.json())
+                .then(reply => {
+                    if (reply.error) {
+                        alert(reply.error);
+                        settingsView();
+                    }
+                    console.log(reply);
+                    settingsView();
+                })
+                .catch(error => {
+                    console.log('Error', error);
+                });
+            }
+        });
+    });
 
     // dark mode
     let darkModeOff = document.querySelector('#darkmode-off');
@@ -211,12 +247,12 @@ function settingsView() {
             .then(response => {
                 darkModeOn.innerHTML = 'ON';
                 darkModeOff.innerHTML = '';
-                navbar.setAttribute('class', 'navbar navbar-expand-lg navbar-dark bg-dark')
-                pageBody.setAttribute('class', 'dark-mode')
+                navbar.setAttribute('class', 'navbar navbar-expand-lg navbar-dark bg-dark');
+                pageBody.setAttribute('class', 'dark-mode');
             })
             .catch(error => {
                 console.log('Error', error);
-            })
+            });
         } else {
             fetch('settings/darkmode=off', {
                 method: "PUT",
@@ -228,15 +264,14 @@ function settingsView() {
             .then(response => {
                 darkModeOn.innerHTML = '';
                 darkModeOff.innerHTML = 'OFF';
-                navbar.setAttribute('class', 'navbar navbar-expand-lg navbar-light bg-light')
+                navbar.setAttribute('class', 'navbar navbar-expand-lg navbar-light bg-light');
                 pageBody.classList.remove('dark-mode');
             })
             .catch(error => {
                 console.log('Error', error);
-            })
+            });
         }
-    })
-
+    });
 }
 
 function addItemToView(item) {
@@ -248,15 +283,12 @@ function addItemToView(item) {
     let itemListStatus = document.createElement('td');
     let itemActive = document.createElement('input');
     let itemEdit = document.createElement('button');
+    let itemDelete = document.createElement('button');
     let quantCol =  document.createElement('td');
 
     // fill in content
     itemName.innerHTML = item.name;
     itemCategory.innerHTML = item.category;
-    // ------------------------------------------------------------------------keep a none vs a null?
-    // if (item.category === "None") {
-    //     itemCategory.style.fontStyle = 'italic';
-    // }
     itemAisle.innerHTML = item.aisle;
 
     // edit button
@@ -272,7 +304,7 @@ function addItemToView(item) {
             // change item info fields to text area prefilled with current value
             let currentInfo = [itemName, itemCategory, itemAisle];
 
-            for (field of currentInfo) {
+            for (let field of currentInfo) {
                 // store value and clear
                 let fieldVal = field.innerHTML;
                 field.innerHTML = '';
@@ -312,12 +344,45 @@ function addItemToView(item) {
             })
             .catch(error => {
                 console.log('Error', error);
-            })
+            });
         }
+    });
+
+    // delete button
+    itemDelete.setAttribute('class', 'btn btn-link');
+    itemDelete.innerHTML = 'Delete';
+
+    // set click for delete button
+    itemDelete.addEventListener('click', function() {
+        let action = confirm(`Delete ${item.name}?`);
+        if (action === true) {
+            fetch('item', {
+                method: 'DELETE',
+                body: JSON.stringify({
+                    pk: item.pk
+                }),
+                headers: {
+                    // send csrf token
+                    'X-CSRFToken': token
+                }
+            })
+            .then(response => {
+                // refresh active view
+                if (currentView === 'active') {
+                    activeView();
+                } else {
+                    allItemsView();
+                }
+            })
+            .catch(error => {
+                console.log('Error:', error);
+            });
+        } 
     });
 
     // create checkbox
     itemActive.setAttribute('type', 'checkbox');
+    itemListStatus.setAttribute('class', 'item-checkbox');
     
     // if on all items
     if (currentView === 'all') {
@@ -341,7 +406,7 @@ function addItemToView(item) {
             })
             .catch(error => {
                 console.log('Error', error);
-            })
+            });
         });
 
     } else if (currentView === 'active') {
@@ -362,21 +427,22 @@ function addItemToView(item) {
         itemQuantity.value = 1;
 
         // update cart total as quantity changes
-        itemQuantity.setAttribute('onchange', 'cartTotaller()')
+        itemQuantity.setAttribute('onchange', 'cartTotaller()');
 
         // price prepend
         let pricePrepend = document.createElement('div');
         pricePrepend.setAttribute('class', 'input-group-prepend');
         let pricePrependText = document.createElement('span');
-        pricePrependText.setAttribute('class', 'input-group-text')
+        pricePrependText.setAttribute('class', 'input-group-text');
         pricePrependText.innerHTML = '@';
         pricePrepend.append(pricePrependText);
 
         // price
         let itemPrice = document.createElement('input');
         setMultAttributes(itemPrice, [['type', 'number'], ['max', '99'], ['min', '0.25'], ['value', item.price], ['step', '0.25'], ['class', 'form-control']]);
+
         // update cart total as quantity changes
-        itemPrice.setAttribute('onchange', 'cartTotaller(); this.value=Number(this.value).toFixed(2);')
+        itemPrice.setAttribute('onchange', 'cartTotaller(); this.value=Number(this.value).toFixed(2);');
         itemPrice.value = Number(itemPrice.value).toFixed(2);
 
         //price append
@@ -389,7 +455,7 @@ function addItemToView(item) {
 
         // units
         let itemUnit = document.createElement('select');
-        for (option of unitOptions) {
+        for (let option of unitOptions) {
             let newOption = document.createElement('option');
             newOption.value = newOption.innerHTML = option;
             itemUnit.append(newOption);
@@ -427,9 +493,9 @@ function addItemToView(item) {
     }
 
     // add to items to view
-    itemListStatus.append(itemActive, itemEdit);
-    addedItem.append(itemName, itemCategory, itemAisle, quantCol, itemListStatus)
-    itemsDisplay = document.querySelector(`#items-list`);
+    itemListStatus.append(itemActive, itemEdit, itemDelete);
+    addedItem.append(itemName, itemCategory, itemAisle, quantCol, itemListStatus);
+    let itemsDisplay = document.querySelector(`#items-list`);
     itemsDisplay.append(addedItem);
 }
 
@@ -438,12 +504,13 @@ function getItems(filter, order) {
     .then(response => response.json())
     .then(data => {
         // add each to view
-        console.log(data);
+        if (data.length === 0) {
+            alertMessage.innerHTML = 'No items to display - add under all items!';
+            alertMessage.setAttribute('class', 'alert alert-warning');
+            alertHolder.style.display = 'block';
+        }
 
         data.forEach(addItemToView);
-
-        // zero item case ----------------------------------
-
 
         // reverse sorting direction
         if (orderDirection === "asc") {
@@ -457,7 +524,7 @@ function getItems(filter, order) {
     })
     .catch(error => {
         console.log('Error', error);
-    })
+    });
 }
 
 function updateList(items) {
@@ -478,12 +545,11 @@ function updateList(items) {
     })
     .catch(error => {
         console.log('Error:', error);
-    })
-
+    });
 }
 
 function setMultAttributes(element, inputList) {
-    for (pair of inputList) {
+    for (let pair of inputList) {
         element.setAttribute(pair[0], pair[1]);
     }
 }
@@ -495,13 +561,13 @@ function cartTotaller() {
     let cartQuantList = [];
 
     // get all quantities
-    for (quant of cartQuantities) {
+    for (let quant of cartQuantities) {
         cartQuantList.push(quant.value);
     }
     
     // get all prices
     let cartPriceList = [];
-    for (price of cartPrices) {
+    for (let price of cartPrices) {
         cartPriceList.push(price.value);
     }
 
@@ -532,7 +598,7 @@ function cartTotaller() {
     // animate total - red if increased, green if decreased
     // clear cart parent
     let cartParent = cartTotal.parentElement;
-    cartParent.innerHTML = ''
+    cartParent.innerHTML = '';
 
     // make new cart total identical to old one
     let newTotal = document.createElement('span');
@@ -574,10 +640,10 @@ function addCheckboxRow(element, column, deleteList) {
                     deleteList.categories.push(newOption.id);
                 }
             } else {
-                deleteList["categories"] = [newOption.id];
+                deleteList.categories = [newOption.id];
             }
         } 
-    })
+    });
 }
 
 function arrayRemover(item, array) {

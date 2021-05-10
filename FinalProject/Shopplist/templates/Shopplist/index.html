@@ -12,7 +12,6 @@
 </div>
 
 <div id="site-body">
-
     <div id="active-view">
         <div class="row">
             <div class="col">
@@ -31,14 +30,13 @@
     </div>
 
     <div id="all-items-view">
-        <form style="margin-left:10px;">
+        <form>
             <h5>Add New Item</h5>
             {% csrf_token %}
             {{ item_form }}
             <input class="btn btn-primary btn-sm" type="submit" value="Add">
         </form>
         <h3 style="margin-top:20px;">All Items</h3>
-
     </div>
 
     <div id="settings-view">
@@ -47,7 +45,7 @@
                 <h3>Remove Categories</h3>
             </div>
             <div class="col" style="margin:auto auto;">
-                <input type="submit" class="btn btn-danger btn-sm" name="delete" value="Remove"></button>
+                <input type="submit" class="btn btn-danger btn-sm" name="delete" value="Remove" style="width:70px;"></button>
             </div>
         </div>
 
@@ -58,6 +56,17 @@
                 </div>
             </div>
         </form>
+
+        <div class="row" style="width:600px">
+            <div class="col">
+                <h3>Add Category</h3>
+            </div>
+            <div class="col" style="margin:auto auto;">
+                <input type="submit" class="btn btn-success btn-sm" name="add" value="Add" style="width:70px;"></button>
+            </div>
+        </div>
+        <input type="text" id="new-category">
+
         <h3>Toggle Darkmode</h3>
         <div id="darkmode-holder">
             <div class="row" style="width:300px">
@@ -91,11 +100,11 @@
                         <span>Aisle</span>
                         <button class="btn btn-link btn-sm dropdown-toggle" type="button" name="sort" data-sort="aisle">
                     </th>
-                    <th scope="col" name="quantity-col">
+                    <th scope="col" name="quantity-col" style="min-width: 375px;">
                         <span></span>
                         <button class="btn btn-link btn-sm dropdown-toggle" type="button" name="sort" data-sort="quantity"></button>
                     </th>
-                    <th scope="col" name="check-col"></th>
+                    <th scope="col" name="check-col" style="min-width: 175px;"></th>
                 </tr>
             </thead>
             <tbody id="items-list">

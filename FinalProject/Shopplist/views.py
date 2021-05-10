@@ -8,7 +8,6 @@ from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 
 import json
-# from django.contrib.auth.decorators import login_required
 
 from .models import User, Category, Item, Shoplist, Unit
 
@@ -20,21 +19,16 @@ class ItemForm(forms.ModelForm):
         labels = {
             "name": _("")
         }
-
         widgets = {
             "name": forms.TextInput(attrs={"placeholder":"Enter item name"}),
             "aisle": forms.TextInput(attrs={"placeholder":"(Optional)"})
-            
         }
-        # widgets = {
-            # 'category': forms.TypedChoiceField(coerce=str, empty_value="Category")
-        # }
+
 
 def index(request):
     # redirect to login if not logged in
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse("login"))
-
 
     # item form for user categories only
     item_form = ItemForm()
@@ -50,13 +44,13 @@ def settings(request, darkmode=None):
     '''Settings page, for deleting categories and toggling darkmode'''
 
     if request.method == "PUT":
+        # for updated darkmode preference
         if darkmode == "on":
             request.user.darkmode = True
         elif darkmode == "off":
             request.user.darkmode = False
         request.user.save()
         return JsonResponse({"status": "Success"}, status=200)
-
 
     if request.method == "GET":
         # get all categories and aisles
@@ -73,24 +67,38 @@ def settings(request, darkmode=None):
         }, safe=True)
 
     if request.method == "DELETE":
+        # for deleting categories
         to_delete = json.loads(request.body)
         categories = to_delete["categories"]
         print(categories)
         
         for category in categories:
             try:
-                Category.objects.get(name=category, creator=request.user).delete()
+                category = Category.objects.get(name=category, creator=request.user)
+                category.delete()
             except Category.DoesNotExist:
                 return JsonResponse({"status": "Invalid category"}, status=400)
         
-        return HttpResponseRedirect(reverse("index"))
+        return JsonResponse({"status": "Success"}, status=200)
 
-    
+    if request.method == "POST":
+        # for creating new categories
+        new_category_name = json.loads(request.body)["category"]
+        # check if category already exists
+        try:
+            Category.objects.get(name=new_category_name, creator=request.user)
+            return JsonResponse({"error": f"Category '{new_category_name}'' already exists!"}, status=400)
+        except Category.DoesNotExist:
+            pass
         
+        new_category = Category(name=new_category_name, creator=request.user)
+        new_category.save()
 
+        return JsonResponse({"status": "Success"}, status=200)
 
 
 def login_view(request):
+    # default login used from previous CSCI E-33a projects
     if request.method == "POST":
 
         # Attempt to sign user in
@@ -111,13 +119,13 @@ def login_view(request):
 
 
 def logout_view(request):
+    # default logout used from previous CSCI E-33a projects
     logout(request)
     return HttpResponseRedirect(reverse("index"))
 
 
 def register(request):
-
-    
+    # default register used from previous CSCI E-33a projects
     if request.method == "POST":
         username = request.POST["username"]
         email = request.POST["email"]
@@ -140,7 +148,7 @@ def register(request):
             })
         login(request, user)
 
-        # add default item categories for new user (default = admin created) ------------------------------
+        # ADDITION - add default item categories for new user (default = admin created)
         admin = User.objects.get(id=1)
         default_categories = Category.objects.filter(creator=admin)
         for i in default_categories:
@@ -162,24 +170,18 @@ def item(request):
 
         # check if name already exits
         try:
-            test = Item.objects.get(name=item["name"], creator=request.user)
-            return JsonResponse({"status": "Item already exists"}, status=400)
-            # add link to edit ----------------------------------------------------------------------------------------
+            Item.objects.get(name=item["name"], creator=request.user)
+            return JsonResponse({"status": "Item already exists!"}, status=400)
         except Item.DoesNotExist:
             pass
-
 
         new_item = Item(name=item["name"], creator=request.user)
         
         if item["category"]:       
-            try: 
-                # if inputted category already exists ---------------------------------------- for now, has to exist.
-                category = Category.objects.get(id = int(item["category"], creator=request.user))
+            try:
+                category = Category.objects.get(id = int(item["category"]), creator=request.user)
                 new_item.category = category
             except Category.DoesNotExist:
-                # new category
-                # new_category = Category(name=item["category"])
-                # new_category.save()
                 return JsonResponse({"status": "Invalid category"}, status=400)
 
         if item["aisle"]:
@@ -211,33 +213,31 @@ def item(request):
                 category = Category(name=updates["category"], creator=request.user)
                 category.save()
 
-
-
-        # probs delete ----------------------------------------------------------------------------------
-        # for field in ["name", "category", "aisle"]:
-        #     setattr(item_to_update, field, updates[field])
-
         item_to_update.name = updates["name"]
         item_to_update.category = category
         item_to_update.aisle = updates["aisle"]
         item_to_update.save()
 
-        # if new category, send indicator
-
         # return updated values
         return JsonResponse(item_to_update.serialize(), safe=False, status=200)
-
-
+    
+    if request.method == "DELETE":
+        # get item pk
+        item_pk = json.loads(request.body)["pk"]
+        try:
+            item_to_delete = Item.objects.get(pk=int(item_pk), creator=request.user)
+        except Item.DoesNotExist:
+            return JsonResponse({"status": "Error"}, status=400)
         
-    else:
-        return HttpResponseRedirect(reverse("index"))
+        # delete
+        item_to_delete.delete()
+        return JsonResponse({"status": "Success"}, status=200)
 
 
 def get_items(request, filter, order, direction):
     '''Returns all or active items in json. Orders by name , category or aisle;
     ascending or descending
     '''
-
     # order by category, need to specify by name as opposed to default primary key
     if order == "category":
         order = "category__name"
@@ -278,8 +278,6 @@ def list_status(request, pk=None):
     if request.method == "PUT":
         # get items
         items_list = json.loads(request.body)["items"]
-        # print(items_list)
-        # items = Item.objects.filter(pk__in=item_pks)
 
         # change items to inactive and increment purchases
         for item in items_list:
@@ -291,13 +289,14 @@ def list_status(request, pk=None):
             item_object.active = False
             item_object.purchases += 1
             item_object.price = items_list[item]["price"]
+
             # get unit object
             unit = Unit.objects.get(unit_abrev=items_list[item]["units"])
             item_object.unit = unit
+
             # save item
             item_object.save()
 
-        # no actual json response needed ------------------------------------------------------------------
         return JsonResponse({"action": "updated"}, status=200)
 
 

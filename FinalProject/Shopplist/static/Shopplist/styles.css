@@ -24,6 +24,10 @@
     border: 1px solid red;
 }
 
+.btn-link {
+    margin-bottom: 3px;
+}
+
 #alert-message {
     margin: 10px 10px;
 }
@@ -46,7 +50,6 @@ th {
     width: 20%;
 }
 
-
 .item-quantity {
     width: 40px;
 }
@@ -56,8 +59,15 @@ th {
 }
 
 .col-3 {
-    margin: auto;
-    padding: auto;
+    text-align: left;
+    padding-right: 5px;
+    padding-left: 0px;
+    margin: 7px 0px;
+    max-width: 30px;
+}
+
+.col-6 {
+    margin-left: 5px;
 }
 
 .delete-options {
@@ -82,7 +92,16 @@ form > label {
     min-width: 225px;
 }
 
-h3 {
+h2, h3, form {
+    margin-left: 10px;
+}
+
+.form-group {
+    width: 300px;
+}
+
+#new-category {
+    margin-bottom: 50px;
     margin-left: 10px;
 }
 
